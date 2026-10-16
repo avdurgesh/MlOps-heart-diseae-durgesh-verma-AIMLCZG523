@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Lint
+        run: flake8 src tests app
+
+      - name: Unit tests
+        run: pytest -v --cov=src --cov-report=xml --junitxml=test-results.xml
+
+      - name: Prepare data
+        run: python -m src.data
+
+      - name: Train models
+        shell: bash
+        run: python -m src.train 2>&1 | tee training.log
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ml-artifacts
+          path: |
+            models/
+            mlruns/
+            training.log
+            test-results.xml
+            coverage.xml
