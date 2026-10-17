@@ -2,7 +2,7 @@
 
 End-to-end MLOps project: predict heart disease risk from the UCI Heart Disease (Cleveland) dataset, with experiment tracking (MLflow), CI (GitHub Actions), a containerized FastAPI service, Kubernetes manifests and Prometheus monitoring.
 
-Author: Durgesh Verma
+Author: Durgesh Verma (ID: 2025AE05155)
 
 Repository: https://github.com/avdurgesh/MlOps-heart-diseae-durgesh-verma-AIMLCZG523
 
