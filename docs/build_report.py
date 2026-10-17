@@ -4,6 +4,7 @@ Screenshots are picked up from screenshots/ by filename; missing ones become pla
 Run: python docs/build_report.py
 """
 import json
+import re
 from pathlib import Path
 
 import matplotlib
@@ -107,10 +108,18 @@ def caption(text):
     c.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
 
+FIG = [0]
+
+
+def next_caption(text: str) -> str:
+    FIG[0] += 1
+    return f"Figure {FIG[0]} - {re.sub(r'^Figure \d+ - ', '', text)}"
+
+
 def picture(path: Path, text: str, width=6.0):
     doc.add_picture(str(path), width=Inches(width))
     doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
-    caption(text)
+    caption(next_caption(text))
 
 
 def shot(name: str, text: str, width=6.0):
@@ -202,6 +211,8 @@ code("python -m src.data      # download + clean dataset\n"
      "flake8 src tests app    # lint")
 p("The cleaned dataset is committed to the repository, so training also works when the machine has no "
   "internet access; src.data re-downloads the raw file from the UCI repository when needed.")
+shot("vm_data_eda.png", "Output of src.data and src.eda", 6.2)
+shot("vm_train_tests.png", "Output of src.train, pytest and src.predict", 6.2)
 
 # ---------------- 3 Data and EDA ----------------
 doc.add_page_break()
@@ -309,7 +320,7 @@ p("The GitHub Actions workflow (.github/workflows/ci.yml) runs on every push and
   "train the models, and upload models, MLflow runs, the training log, test results and coverage as the "
   "'ml-artifacts' artifact. The training step runs under bash with pipefail, so the job fails if "
   "training fails even though the log is piped through tee. Any lint, test or training error fails the pipeline.")
-shot("ci_run.png", "Figure 8 - Successful GitHub Actions run (build passed in 1m 32s, 1 artifact)")
+shot("ci_run.png", "Successful GitHub Actions runs (CI #1 and CI #2)")
 
 # ---------------- 8 Docker ----------------
 doc.add_page_break()
@@ -336,7 +347,7 @@ shot("swagger.png", "Figure 10 - Swagger UI for the API")
 
 # ---------------- 9 Deployment ----------------
 h("9. Production deployment on Kubernetes")
-p("The image is deployed to a local Minikube cluster (Docker driver) using the manifests in k8s/:")
+p("The image is deployed to a Minikube cluster (Docker driver) using the manifests in k8s/:")
 bullets([
     "Namespace heart-disease and a Deployment with 2 replicas, readiness and liveness probes on /health, "
     "and CPU/memory requests and limits.",
@@ -344,14 +355,16 @@ bullets([
     "An nginx Ingress routing / to the Service.",
 ])
 code("minikube start -p heart-disease --driver=docker\n"
+     "minikube -p heart-disease image load heart-disease-api:1.0\n"
      "kubectl apply -f k8s/deployment.yaml\n"
      "minikube -p heart-disease addons enable ingress\n"
      "kubectl apply -f k8s/ingress.yaml\n"
-     "minikube -p heart-disease tunnel      # exposes the ingress / LoadBalancer on 127.0.0.1")
-p("Verification: both pods reach Running, the Service receives the external IP 127.0.0.1 through the tunnel, "
-  "and /health and /predict return the same results as the plain Docker container (prediction 0, confidence 0.834).")
-shot("k8s_resources.png", "Figure 11 - kubectl get pods, svc and ingress")
-shot("predict_ingress.png", "Figure 12 - /predict called through the Ingress")
+     "curl http://$(minikube -p heart-disease ip)/health")
+p("Verification: both pods reach Running and the Ingress receives the address of the Minikube node. "
+  "/health and /predict called through the Ingress return the same results as the plain Docker container "
+  "(prediction 0, confidence 0.834). The LoadBalancer Service keeps an EXTERNAL-IP of <pending> because "
+  "Minikube has no cloud load balancer; the Ingress is the access path.")
+shot("k8s_resources.png", "kubectl get pods, svc and ingress, the /metrics counters and the request logs of the pods")
 
 # ---------------- 10 Monitoring ----------------
 doc.add_page_break()
@@ -387,7 +400,7 @@ bullets([
     "grid and the default L2 regularisation is used.",
     "minikube image load failed on Windows (missing wmic); the image is built directly inside Minikube's "
     "Docker daemon instead.",
-    "Port 3000 was already in use locally, so Grafana is exposed on port 3001.",
+    "Port 3000 was already in use on the development machine, so Grafana is exposed on port 3001.",
     "Docker Desktop BuildKit reported 'changes out of order' while rebuilding through compose; the stack was "
     "started from the already built image.",
     "Pipeline robustness: tee would hide a failing training step, so the step runs with 'shell: bash' (pipefail).",
@@ -407,8 +420,8 @@ p("Disclaimer: this model is a learning exercise and is not a medical device.", 
 h("Access instructions", 2)
 bullets([
     f"Code repository: {REPO}",
-    "Local API (Docker): http://localhost:8000 (docs at /docs).",
-    "Local Kubernetes: http://127.0.0.1/ while 'minikube tunnel' is running, or "
+    "API (Docker): http://localhost:8000 (docs at /docs).",
+    "Kubernetes: through the Ingress at the Minikube IP ('minikube ip'), or "
     "'kubectl -n heart-disease port-forward svc/heart-disease-api 8080:80'.",
     "Grafana: http://localhost:3001 (admin/admin), Prometheus: http://localhost:9090, MLflow: http://localhost:5001.",
 ])
