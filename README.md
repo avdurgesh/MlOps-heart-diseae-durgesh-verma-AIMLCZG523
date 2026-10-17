@@ -114,8 +114,9 @@ curl http://localhost:8000/health
 docker compose up --build
 ```
 
-- API: http://localhost:8000, Prometheus: http://localhost:9090, Grafana: http://localhost:3000 (default login admin/admin).
-- In Grafana add a Prometheus data source with URL `http://prometheus:9090`, then chart `api_requests_total`, `api_request_latency_seconds` and `model_predictions_total`.
+- API: http://localhost:8000, Prometheus: http://localhost:9090, Grafana: http://localhost:3001 (default login admin/admin).
+- Grafana is provisioned automatically with a Prometheus data source and the "Heart Disease API" dashboard (total requests and predictions, predictions by class, request rate, p95 latency): http://localhost:3001/d/heart-api.
+- Generate traffic by calling `/predict` a few times, then refresh the dashboard.
 
 ## Kubernetes (Minikube on the VM)
 

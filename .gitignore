@@ -7,3 +7,6 @@ mlruns/
 mlflow.db
 data/raw/
 .coverage
+
+~$*
+.vscode/

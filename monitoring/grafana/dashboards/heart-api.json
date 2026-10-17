@@ -1,0 +1,34 @@
+{
+  "title": "Heart Disease API",
+  "uid": "heart-api",
+  "schemaVersion": 39,
+  "refresh": "10s",
+  "time": { "from": "now-15m", "to": "now" },
+  "panels": [
+    {
+      "id": 1, "type": "stat", "title": "Total predictions",
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(model_predictions_total)", "refId": "A" }]
+    },
+    {
+      "id": 2, "type": "stat", "title": "Total requests",
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 0 },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(api_requests_total)", "refId": "A" }]
+    },
+    {
+      "id": 3, "type": "piechart", "title": "Predictions by class (0 = no disease, 1 = disease)",
+      "gridPos": { "h": 5, "w": 12, "x": 12, "y": 0 },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum by (label) (model_predictions_total)", "legendFormat": "class {{label}}", "refId": "A" }]
+    },
+    {
+      "id": 4, "type": "timeseries", "title": "Request rate by path (req/s)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 5 },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum by (path) (rate(api_requests_total[1m]))", "legendFormat": "{{path}}", "refId": "A" }]
+    },
+    {
+      "id": 5, "type": "timeseries", "title": "p95 latency (seconds)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 5 },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "histogram_quantile(0.95, sum by (le, path) (rate(api_request_latency_seconds_bucket[1m])))", "legendFormat": "{{path}}", "refId": "A" }]
+    }
+  ]
+}
